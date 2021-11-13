@@ -15,6 +15,14 @@ import argparse
 # ассиметричный - RSA
 def generate_keys(encrypted_symmetrical_key_path: str, open_asymmetric_key_path: str,
                   private_asymmetric_key_path: str) -> None:
+    """
+    :param encrypted_symmetrical_key_path:
+        путь, по которому сохранить зашифрованный ключ симметричного алгоритма
+    :param open_asymmetric_key_path:
+        путь, по которому сохранить открытый ключ ассиметричного алгоритма
+    :param private_asymmetric_key_path:
+        путь, по которому сохранить закрытый ключ ассиметричного алгоритма
+    """
     # генерация ключа симметричного шифрования
     symmetrical_key = ChaCha20Poly1305.generate_key()
 
@@ -57,6 +65,12 @@ def generate_keys(encrypted_symmetrical_key_path: str, open_asymmetric_key_path:
 
 
 def decrypt_symmetrical_key(encrypted_symmetrical_key_path: str, private_asymmetric_key_path: str) -> bytes:
+    """
+    :param encrypted_symmetrical_key_path:
+        путь к зашифрованному ключу симметричного алгоритма
+    :param private_asymmetric_key_path:
+        путь к приватному ключу асимметричного алгоритма
+    """
     with open(encrypted_symmetrical_key_path, 'rb') as key_file:
         encrypted_symmetrical_key = key_file.read()
     with open(private_asymmetric_key_path, 'rb') as key_file:
@@ -76,6 +90,16 @@ def decrypt_symmetrical_key(encrypted_symmetrical_key_path: str, private_asymmet
 def encrypt_text_file(text_file_path: str, private_asymmetric_key_path: str,
                       encrypted_symmetrical_key_path: str, save_to_path: str,
                       ) -> None:
+    """
+    :param text_file_path:
+        путь к файлу, который нужно зашифровать
+    :param private_asymmetric_key_path:
+        путь к приватному ключу асимметричного алгоритма
+    :param encrypted_symmetrical_key_path:
+        путь к зашифрованному ключу симметричного алгоритма
+    :param save_to_path:
+        путь, в которой нужно сохранить зашифрованный файл
+    """
 
     symmetrical_key = decrypt_symmetrical_key(encrypted_symmetrical_key_path, private_asymmetric_key_path)
     with open(text_file_path, 'r', encoding='utf-8') as key_file:
@@ -93,6 +117,16 @@ def encrypt_text_file(text_file_path: str, private_asymmetric_key_path: str,
 def decrypt_text_file(encrypted_text_file_path: str, private_asymmetric_key_path: str,
                       encrypted_symmetrical_key_path: str,
                       save_to_path: str) -> None:
+    """
+    :param encrypted_text_file_path:
+        путь к зашифрованному файлу, который требуется расшифровать
+    :param private_asymmetric_key_path:
+        путь к приватному ключу асимметричного алгоритма
+    :param encrypted_symmetrical_key_path:
+        путь к зашифрованному ключу симметричного алгоритма
+    :param save_to_path:
+        путь, в которой нужно сохранить расшифрованный файл
+    """
 
     symmetrical_key = decrypt_symmetrical_key(encrypted_symmetrical_key_path, private_asymmetric_key_path)
     with open(encrypted_text_file_path, 'rb') as key_file:
