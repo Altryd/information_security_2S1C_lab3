@@ -11,7 +11,7 @@ import json
 import argparse
 
 
-# симметричный алгоритм - chacha20 (256 бит ключ, 192 доп.ключ)
+# симметричный алгоритм - chacha20 (256 бит ключ, 128 доп.ключ)
 # ассиметричный - RSA
 def generate_keys(encrypted_symmetrical_key_path: str, open_asymmetric_key_path: str,
                   private_asymmetric_key_path: str) -> None:
@@ -103,7 +103,7 @@ def decrypt_text_file(encrypted_text_file_path: str, private_asymmetric_key_path
     cipher = Cipher(algorithm, mode=None)
     decryptor = cipher.decryptor()
     dc_text = decryptor.update(ciphertext) + decryptor.finalize()
-    with open(save_to_path, 'w') as file:
+    with open(save_to_path, 'w', encoding='utf-8') as file:
         file.write(dc_text.decode('utf-8'))
 
 
@@ -116,6 +116,9 @@ if __name__ == '__main__':
         help='Аргумент, указывающий путь к файлу, в котором содержатся настройки',
         required=True,
         dest='file_input')
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-enc', '--encryption', help='Запускает режим шифрования', dest='encryption')
+    group.add_argument('-dec', '--decryption', help='Запускает режим дешифрования', dest='decryption')
     args = parser.parse_args()
     read_data_from = os.path.realpath(args.file_input)
     try:
@@ -129,16 +132,13 @@ if __name__ == '__main__':
             "public_key": '.pem',
             "secret_key": '.pem'
         }
-
-        if len(json_data) != 6:
-            print("Settings file is incorrect - invalid number of records in files, try again")
-        else:
+        if args.encryption is not None:
             for key, value in json_data.items():
                 filename, file_extension = os.path.splitext(value)
                 if file_extension != json_needed_extension[key]:
                     print("Settings file is incorrect - invalid extensions in files, try again")
                     raise SystemExit(1)
-            with tqdm(range(3), desc='Генерируем ключи системы') as progressbar:
+            with tqdm(range(2), desc='Генерируем ключи системы') as progressbar:
                 generate_keys(json_data['symmetric_key'],
                               json_data['public_key'],
                               json_data['secret_key'])
@@ -149,11 +149,19 @@ if __name__ == '__main__':
                                   json_data['symmetric_key'],
                                   json_data['encrypted_file'])
                 progressbar.update(1)
-                progressbar.set_description('Расшифровываем текстовый файл')
+            print('\nФайл был успешно зашифрован')
+        else:
+            for key, value in json_data.items():
+                filename, file_extension = os.path.splitext(value)
+                if file_extension != json_needed_extension[key]:
+                    print("Settings file is incorrect - invalid extensions in files, try again")
+                    raise SystemExit(1)
+            with tqdm(range(1), desc='Расшифровываем файл') as progressbar:
                 decrypt_text_file(json_data['encrypted_file'],
                                   json_data['secret_key'],
                                   json_data['symmetric_key'],
                                   json_data['decrypted_file'])
                 progressbar.update(1)
+            print('Файл был успешно расшифрован')
     except:
-        print("Произошла критическая ошибка при выполнении программы, проверьте путь к файлу")
+        print("Произошла критическая ошибка при выполнении программы, проверьте путь к файлу настроек и его содержание")
